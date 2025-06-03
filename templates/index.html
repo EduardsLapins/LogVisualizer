@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Log Analyzer - Web Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: border-color 0.3s;
+        }
+        .upload-section:hover {
+            border-color: #007bff;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .plot-controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .plot-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .plot-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .info-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚁 Drone Log Analyzer</h1>
+        
+        <div class="upload-section">
+            <h3>Upload Drone Log File</h3>
+            <input type="file" id="fileInput" accept=".csv,.txt,.log" style="margin: 10px;">
+            <br>
+            <button class="btn" onclick="uploadFile()">Upload & Analyze</button>
+        </div>
+        
+        <div id="messages"></div>
+        <div id="loading" class="loading">Processing...</div>
+        
+        <div id="fileInfo" class="info-section" style="display: none;">
+            <h3>File Information</h3>
+            <div id="fileDetails"></div>
+        </div>
+        
+        <div id="plotControls" class="plot-controls" style="display: none;">
+            <h3>Generate Plots</h3>
+            <button class="btn" onclick="generatePlot('altitude')">Altitude Plot</button>
+            <button class="btn" onclick="generatePlot('speed')">Speed Plot</button>
+            <button class="btn" onclick="getDataSummary()">Data Summary</button>
+        </div>
+        
+        <div id="plotContainer" class="plot-container"></div>
+        
+        <div id="summaryContainer" class="info-section" style="display: none;">
+            <h3>Data Summary</h3>
+            <div id="summaryContent"></div>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = type;
+            messageElement.textContent = message;
+            messagesDiv.appendChild(messageElement);
+            
+            setTimeout(() => {
+                messageElement.remove();
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showMessage('Please select a file first', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('File uploaded successfully!', 'success');
+                    displayFileInfo(result.info);
+                    document.getElementById('plotControls').style.display = 'block';
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Upload failed: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        }
+
+        function displayFileInfo(info) {
+            const fileInfoDiv = document.getElementById('fileInfo');
+            const detailsDiv = document.getElementById('fileDetails');
+            
+            detailsDiv.innerHTML = `
+                <p><strong>Filename:</strong> ${info.filename}</p>
+                <p><strong>Rows:</strong> ${info.rows}</p>
+                <p><strong>Columns:</strong> ${info.columns.join(', ')}</p>
+                <div><strong>Preview:</strong>${info.preview}</div>
+            `;
+            
+            fileInfoDiv.style.display = 'block';
+        }
+
+        async function generatePlot(plotType) {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`/plot/${plotType}`);
+                const result = await response.json();
+                
+                if (result.plot) {
+                    const plotContainer = document.getElementById('plotContainer');
+                    plotContainer.innerHTML = `<img src="data:image/png;base64,${result.plot}" alt="${plotType} plot">`;
+                    showMessage(`${plotType} plot generated successfully!`, 'success');
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Plot generation failed: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        }
+
+        async function getDataSummary() {
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/data/summary');
+                const result = await response.json();
+                
+                if (result.shape) {
+                    const summaryContainer = document.getElementById('summaryContainer');
+                    const summaryContent = document.getElementById('summaryContent');
+                    
+                    summaryContent.innerHTML = `
+                        <p><strong>Shape:</strong> ${result.shape[0]} rows × ${result.shape[1]} columns</p>
+                        <p><strong>Columns:</strong> ${result.columns.join(', ')}</p>
+                        <div><strong>Statistical Summary:</strong>${result.description}</div>
+                    `;
+                    
+                    summaryContainer.style.display = 'block';
+                    showMessage('Data summary generated!', 'success');
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Summary generation failed: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        }
+    </script>
+</body>
+</html>
