@@ -16,7 +16,23 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gui.time_range_selector import TimeRangeSelector
 
 class ControlPanel(ttk.Frame):
-    """Control panel for session and time management"""
+    """Modern control panel for session and time management"""
+    
+    # Modern color scheme matching main window
+    COLORS = {
+        'bg_primary': '#ffffff',
+        'bg_secondary': '#f8fafc',
+        'bg_tertiary': '#f1f5f9',
+        'accent': '#3b82f6',
+        'accent_hover': '#2563eb',
+        'text_primary': '#1e293b',
+        'text_secondary': '#64748b',
+        'border': '#e2e8f0',
+        'border_light': '#f1f5f9',
+        'success': '#10b981',
+        'warning': '#f59e0b',
+        'error': '#ef4444'
+    }
     
     def __init__(self, parent, on_folder_browse: Callable = None, 
                  on_session_change: Callable = None, on_refresh: Callable = None,
@@ -41,75 +57,221 @@ class ControlPanel(ttk.Frame):
         self.session_combo = None
         self.time_selector = None
         
+        # Configure styling
+        self.configure(style='Card.TFrame')
+        
         self.create_widgets()
     
     def create_widgets(self):
-        """Create all control panel widgets"""
-        # Main container with some styling
-        main_frame = ttk.LabelFrame(self, text="Session Control", padding=10)
-        main_frame.pack(fill=tk.X)
+        """Create all control panel widgets with modern styling"""
+        # Main container with clean styling
+        main_frame = tk.Frame(self, bg=self.COLORS['bg_primary'])
+        main_frame.pack(fill=tk.X, expand=True)
         
-        # Folder selection row
-        self.create_folder_selection(main_frame)
+        # Header section
+        self.create_header(main_frame)
         
-        # Session selection row
-        self.create_session_selection(main_frame)
+        # Controls grid
+        controls_container = tk.Frame(main_frame, bg=self.COLORS['bg_primary'])
+        controls_container.pack(fill=tk.X, padx=20, pady=(0, 20))
         
-        # Interactive time range selector (THE VISUAL SLIDER!)
-        self.create_time_selector(main_frame)
+        # Create two-column layout
+        left_column = tk.Frame(controls_container, bg=self.COLORS['bg_primary'])
+        left_column.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 20))
+        
+        right_column = tk.Frame(controls_container, bg=self.COLORS['bg_primary'])
+        right_column.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+        
+        # Folder and session selection
+        self.create_folder_selection(left_column)
+        self.create_session_selection(right_column)
+        
+        # Time range selector section
+        self.create_time_selector_section(main_frame)
+    
+    def create_header(self, parent):
+        """Create modern header"""
+        header_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'], height=50)
+        header_frame.pack(fill=tk.X, padx=20, pady=(15, 10))
+        header_frame.pack_propagate(False)
+        
+        # Title
+        title_label = tk.Label(header_frame,
+                             text="Session Control",
+                             bg=self.COLORS['bg_primary'],
+                             fg=self.COLORS['text_primary'],
+                             font=('Segoe UI', 12, 'bold'))
+        title_label.pack(side=tk.LEFT, pady=10)
+        
+        # Subtitle
+        subtitle_label = tk.Label(header_frame,
+                                text="Select data source and time range",
+                                bg=self.COLORS['bg_primary'],
+                                fg=self.COLORS['text_secondary'],
+                                font=('Segoe UI', 9))
+        subtitle_label.pack(side=tk.LEFT, padx=(15, 0), pady=10)
     
     def create_folder_selection(self, parent):
-        """Create folder selection controls"""
-        folder_frame = ttk.Frame(parent)
-        folder_frame.pack(fill=tk.X, pady=(0, 5))
+        """Create modern folder selection controls"""
+        folder_section = tk.Frame(parent, bg=self.COLORS['bg_secondary'], 
+                                relief='flat', bd=1, highlightbackground=self.COLORS['border_light'])
+        folder_section.pack(fill=tk.X, pady=(0, 15))
         
-        ttk.Label(folder_frame, text="Log Folder:", width=12).pack(side=tk.LEFT)
+        # Section header
+        header_frame = tk.Frame(folder_section, bg=self.COLORS['bg_secondary'])
+        header_frame.pack(fill=tk.X, padx=15, pady=(15, 10))
         
-        folder_entry = ttk.Entry(folder_frame, textvariable=self.folder_var, state='readonly')
-        folder_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 5))
+        tk.Label(header_frame, 
+                text="📁 Data Folder",
+                bg=self.COLORS['bg_secondary'],
+                fg=self.COLORS['text_primary'],
+                font=('Segoe UI', 10, 'bold')).pack(side=tk.LEFT)
         
-        browse_btn = ttk.Button(folder_frame, text="Browse", command=self._on_browse_click)
+        # Controls
+        controls_frame = tk.Frame(folder_section, bg=self.COLORS['bg_secondary'])
+        controls_frame.pack(fill=tk.X, padx=15, pady=(0, 15))
+        
+        # Entry with modern styling
+        self.folder_entry = tk.Entry(controls_frame, 
+                                   textvariable=self.folder_var,
+                                   state='readonly',
+                                   bg=self.COLORS['bg_primary'],
+                                   fg=self.COLORS['text_primary'],
+                                   font=('Segoe UI', 9),
+                                   relief='flat',
+                                   bd=1,
+                                   highlightbackground=self.COLORS['border'],
+                                   highlightthickness=1)
+        self.folder_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+        
+        # Modern browse button
+        browse_btn = tk.Button(controls_frame,
+                             text="Browse",
+                             command=self._on_browse_click,
+                             bg=self.COLORS['accent'],
+                             fg='white',
+                             font=('Segoe UI', 9),
+                             relief='flat',
+                             borderwidth=0,
+                             padx=20, pady=8,
+                             cursor='hand2')
         browse_btn.pack(side=tk.RIGHT)
+        
+        # Add hover effect
+        self.add_hover_effect(browse_btn, self.COLORS['accent'], self.COLORS['accent_hover'])
         
         # Add tooltip
         self.create_tooltip(browse_btn, "Select the folder containing drone log sessions")
     
     def create_session_selection(self, parent):
-        """Create session selection controls"""
-        session_frame = ttk.Frame(parent)
-        session_frame.pack(fill=tk.X, pady=(0, 5))
+        """Create modern session selection controls"""
+        session_section = tk.Frame(parent, bg=self.COLORS['bg_secondary'],
+                                 relief='flat', bd=1, highlightbackground=self.COLORS['border_light'])
+        session_section.pack(fill=tk.X, pady=(0, 15))
         
-        ttk.Label(session_frame, text="Session:", width=12).pack(side=tk.LEFT)
+        # Section header
+        header_frame = tk.Frame(session_section, bg=self.COLORS['bg_secondary'])
+        header_frame.pack(fill=tk.X, padx=15, pady=(15, 10))
         
-        self.session_combo = ttk.Combobox(session_frame, textvariable=self.session_var, 
-                                         state='readonly', width=25)
-        self.session_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 5))
+        tk.Label(header_frame,
+                text="🕒 Session",
+                bg=self.COLORS['bg_secondary'],
+                fg=self.COLORS['text_primary'],
+                font=('Segoe UI', 10, 'bold')).pack(side=tk.LEFT)
+        
+        # Controls
+        controls_frame = tk.Frame(session_section, bg=self.COLORS['bg_secondary'])
+        controls_frame.pack(fill=tk.X, padx=15, pady=(0, 15))
+        
+        # Modern combobox
+        self.session_combo = ttk.Combobox(controls_frame, 
+                                        textvariable=self.session_var,
+                                        state='readonly',
+                                        font=('Segoe UI', 9),
+                                        style='Modern.TCombobox')
+        self.session_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
         self.session_combo.bind('<<ComboboxSelected>>', self._on_session_selected)
         
-        refresh_btn = ttk.Button(session_frame, text="Refresh", command=self._on_refresh_click)
+        # Modern refresh button
+        refresh_btn = tk.Button(controls_frame,
+                              text="↻",
+                              command=self._on_refresh_click,
+                              bg=self.COLORS['bg_tertiary'],
+                              fg=self.COLORS['text_primary'],
+                              font=('Segoe UI', 11),
+                              relief='flat',
+                              borderwidth=1,
+                              highlightbackground=self.COLORS['border'],
+                              width=3,
+                              padx=8, pady=8,
+                              cursor='hand2')
         refresh_btn.pack(side=tk.RIGHT)
+        
+        # Add hover effect
+        self.add_hover_effect(refresh_btn, self.COLORS['bg_tertiary'], self.COLORS['border_light'])
         
         # Add tooltips
         self.create_tooltip(self.session_combo, "Select a drone session to analyze")
         self.create_tooltip(refresh_btn, "Refresh the list of available sessions")
     
-    def create_time_selector(self, parent):
-        """Create the visual time range selector (SLIDER!)"""
+    def create_time_selector_section(self, parent):
+        """Create the time range selector section with modern styling"""
+        time_section = tk.Frame(parent, bg=self.COLORS['bg_secondary'],
+                              relief='flat', bd=1, highlightbackground=self.COLORS['border_light'])
+        time_section.pack(fill=tk.X, padx=20, pady=(0, 20))
+        
+        # Section header
+        header_frame = tk.Frame(time_section, bg=self.COLORS['bg_secondary'])
+        header_frame.pack(fill=tk.X, padx=20, pady=(20, 10))
+        
+        tk.Label(header_frame,
+                text="⏱️ Time Range Selection",
+                bg=self.COLORS['bg_secondary'],
+                fg=self.COLORS['text_primary'],
+                font=('Segoe UI', 11, 'bold')).pack(side=tk.LEFT)
+        
+        tk.Label(header_frame,
+                text="Drag the handles to select a specific time window",
+                bg=self.COLORS['bg_secondary'],
+                fg=self.COLORS['text_secondary'],
+                font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(15, 0))
+        
+        # Time selector container
+        selector_container = tk.Frame(time_section, bg=self.COLORS['bg_secondary'])
+        selector_container.pack(fill=tk.X, padx=20, pady=(0, 20))
+        
+        # Create the visual time selector
         self.time_selector = TimeRangeSelector(
-            parent, 
+            selector_container,
             on_range_change=self._on_time_range_changed
         )
-        self.time_selector.pack(fill=tk.X, pady=(10, 0))
+        self.time_selector.pack(fill=tk.X)
+    
+    def add_hover_effect(self, widget, normal_color, hover_color):
+        """Add hover effect to button"""
+        def on_enter(event):
+            widget.configure(bg=hover_color)
+        
+        def on_leave(event):
+            widget.configure(bg=normal_color)
+        
+        widget.bind('<Enter>', on_enter)
+        widget.bind('<Leave>', on_leave)
     
     def create_tooltip(self, widget, text):
-        """Create a simple tooltip for a widget"""
+        """Create a modern tooltip for a widget"""
         def on_enter(event):
             tooltip = tk.Toplevel()
             tooltip.wm_overrideredirect(True)
             tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
+            tooltip.configure(bg=self.COLORS['text_primary'])
             
-            label = ttk.Label(tooltip, text=text, background='#ffffe0', 
-                            relief='solid', borderwidth=1, font=('TkDefaultFont', 8))
+            label = tk.Label(tooltip, 
+                           text=text, 
+                           bg=self.COLORS['text_primary'],
+                           fg='white',
+                           font=('Segoe UI', 8),
+                           padx=10, pady=6)
             label.pack()
             
             widget.tooltip = tooltip
@@ -152,6 +314,9 @@ class ControlPanel(ttk.Frame):
     def set_folder_path(self, path: str):
         """Set the folder path display"""
         self.folder_var.set(path)
+        # Update entry styling to show content
+        if path:
+            self.folder_entry.configure(bg=self.COLORS['bg_primary'])
     
     def get_folder_path(self) -> str:
         """Get the current folder path"""

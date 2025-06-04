@@ -9,7 +9,28 @@ from datetime import datetime, timedelta
 from typing import Callable, Optional, Tuple
 
 class TimeRangeSelector(ttk.Frame):
-    """Visual time range slider with draggable start and end points"""
+    """Modern visual time range slider with draggable start and end points"""
+    
+    # Modern color scheme
+    COLORS = {
+        'bg_primary': '#ffffff',
+        'bg_secondary': '#f8fafc',
+        'bg_tertiary': '#f1f5f9',
+        'accent': '#3b82f6',
+        'accent_hover': '#2563eb',
+        'accent_light': '#dbeafe',
+        'text_primary': '#1e293b',
+        'text_secondary': '#64748b',
+        'border': '#e2e8f0',
+        'border_light': '#f1f5f9',
+        'success': '#10b981',
+        'warning': '#f59e0b',
+        'track_bg': '#f1f5f9',
+        'track_selected': '#3b82f6',
+        'handle_bg': '#ffffff',
+        'handle_border': '#3b82f6',
+        'handle_shadow': '#e2e8f0'
+    }
     
     def __init__(self, parent, on_range_change: Callable = None):
         super().__init__(parent)
@@ -22,42 +43,36 @@ class TimeRangeSelector(ttk.Frame):
         self.current_start = None
         self.current_end = None
         
-        # Slider dimensions
-        self.slider_width = 600
-        self.slider_height = 40  # Reduced from 60 to 40
-        self.handle_size = 16    # Reduced from 20 to 16
-        self.track_height = 6    # Reduced from 8 to 6
-        self.margin = 25         # Reduced from 30 to 25
+        # Compact slider dimensions for horizontal layout
+        self.slider_width = 400
+        self.slider_height = 35
+        self.handle_size = 16
+        self.track_height = 6
+        self.margin = 20
         
         # Dragging state
         self.dragging = None  # 'start', 'end', or None
         self.start_handle_x = 0
         self.end_handle_x = 0
         
-        # Colors
-        self.track_bg = '#e0e0e0'
-        self.track_selected = '#2196F3'
-        self.handle_color = '#ffffff'
-        self.handle_border = '#2196F3'
-        self.handle_active = '#1976D2'
-        
         self.create_widgets()
     
     def create_widgets(self):
-        """Create the time range selector widgets"""
-        # Main container
-        container = ttk.LabelFrame(self, text="Time Range Selector", padding=8)  # Reduced padding
-        container.pack(fill=tk.BOTH, expand=True)
+        """Create the compact time range selector widgets"""
+        # Main container - more compact for horizontal layout
+        container = tk.Frame(self, bg=self.COLORS['bg_primary'])
+        container.pack(fill=tk.X)
         
-        # Slider canvas
+        # Compact slider canvas
         self.canvas = tk.Canvas(
             container,
             width=self.slider_width,
             height=self.slider_height,
-            bg='white',
-            highlightthickness=0
+            bg=self.COLORS['bg_primary'],
+            highlightthickness=0,
+            relief='flat'
         )
-        self.canvas.pack(pady=5)  # Reduced from pady=10
+        self.canvas.pack(pady=(8, 5))
         
         # Bind mouse events
         self.canvas.bind('<Button-1>', self.on_mouse_down)
@@ -66,50 +81,54 @@ class TimeRangeSelector(ttk.Frame):
         self.canvas.bind('<Motion>', self.on_mouse_move)
         self.canvas.bind('<Configure>', self.on_resize)
         
-        # Time display frame
-        time_frame = ttk.Frame(container)
-        time_frame.pack(fill=tk.X, pady=(5, 0))  # Reduced from pady=(10, 0)
+        # Compact control buttons
+        button_frame = tk.Frame(container, bg=self.COLORS['bg_primary'])
+        button_frame.pack(pady=(5, 0))
         
-        # Start time
-        start_frame = ttk.Frame(time_frame)
-        start_frame.pack(side=tk.LEFT)
+        # Reset button - more compact
+        reset_btn = tk.Button(button_frame,
+                            text="Reset",
+                            command=self.reset_range,
+                            bg=self.COLORS['bg_tertiary'],
+                            fg=self.COLORS['text_primary'],
+                            font=('Segoe UI', 8),
+                            relief='flat',
+                            borderwidth=1,
+                            highlightbackground=self.COLORS['border'],
+                            padx=10, pady=4,
+                            cursor='hand2')
+        reset_btn.pack(side=tk.LEFT, padx=(0, 8))
         
-        ttk.Label(start_frame, text="Start Time:", font=('Arial', 9, 'bold')).pack()
-        self.start_time_var = tk.StringVar(value="--:--:--")
-        ttk.Label(start_frame, textvariable=self.start_time_var, 
-                 font=('Arial', 12), foreground='#2196F3').pack()
+        # Apply button - more compact
+        apply_btn = tk.Button(button_frame,
+                            text="Apply",
+                            command=self.apply_selection,
+                            bg=self.COLORS['accent'],
+                            fg='white',
+                            font=('Segoe UI', 8),
+                            relief='flat',
+                            borderwidth=0,
+                            padx=12, pady=4,
+                            cursor='hand2')
+        apply_btn.pack(side=tk.LEFT)
         
-        # Duration in center
-        duration_frame = ttk.Frame(time_frame)
-        duration_frame.pack(side=tk.LEFT, expand=True)
-        
-        ttk.Label(duration_frame, text="Selected Duration:", font=('Arial', 9, 'bold')).pack()
-        self.duration_var = tk.StringVar(value="--")
-        ttk.Label(duration_frame, textvariable=self.duration_var, 
-                 font=('Arial', 12), foreground='#FF9800').pack()
-        
-        # End time
-        end_frame = ttk.Frame(time_frame)
-        end_frame.pack(side=tk.RIGHT)
-        
-        ttk.Label(end_frame, text="End Time:", font=('Arial', 9, 'bold')).pack()
-        self.end_time_var = tk.StringVar(value="--:--:--")
-        ttk.Label(end_frame, textvariable=self.end_time_var, 
-                 font=('Arial', 12), foreground='#2196F3').pack()
-        
-        # Control buttons
-        button_frame = ttk.Frame(container)
-        button_frame.pack(fill=tk.X, pady=(8, 0))  # Reduced from pady=(15, 0)
-        
-        ttk.Button(button_frame, text="Reset to Full Range", 
-                  command=self.reset_range).pack(side=tk.LEFT)
-        
-        ttk.Button(button_frame, text="Apply Selection", 
-                  command=self.apply_selection).pack(side=tk.RIGHT)
+        # Add hover effects
+        self.add_hover_effect(reset_btn, self.COLORS['bg_tertiary'], self.COLORS['border_light'])
+        self.add_hover_effect(apply_btn, self.COLORS['accent'], self.COLORS['accent_hover'])
         
         # Initialize with empty state
-        self.update_time_displays()
         self.draw_slider()
+    
+    def add_hover_effect(self, widget, normal_color, hover_color):
+        """Add hover effect to button"""
+        def on_enter(event):
+            widget.configure(bg=hover_color)
+        
+        def on_leave(event):
+            widget.configure(bg=normal_color)
+        
+        widget.bind('<Enter>', on_enter)
+        widget.bind('<Leave>', on_leave)
     
     def set_time_range(self, min_time: datetime, max_time: datetime):
         """Set the available time range from session data"""
@@ -125,7 +144,6 @@ class TimeRangeSelector(ttk.Frame):
         # Calculate handle positions and update display
         self.calculate_handle_positions()
         self.draw_slider()
-        self.update_time_displays()
         
         # Notify about the initial range
         if self.on_range_change:
@@ -167,14 +185,16 @@ class TimeRangeSelector(ttk.Frame):
         return self.min_time + timedelta(seconds=ratio * total_duration)
     
     def draw_slider(self):
-        """Draw the slider components"""
+        """Draw the compact slider components"""
         self.canvas.delete("all")
         
         if not self.min_time or not self.max_time:
-            # Draw empty state - wait for session data
+            # Compact empty state
             self.canvas.create_text(
                 self.slider_width // 2, self.slider_height // 2,
-                text="Select a session to view time range", font=('Arial', 12), fill='gray'
+                text="Select a session to view time range",
+                font=('Segoe UI', 9),
+                fill=self.COLORS['text_secondary']
             )
             return
         
@@ -192,11 +212,13 @@ class TimeRangeSelector(ttk.Frame):
         track_start = self.margin
         track_end = canvas_width - self.margin
         
-        # Draw background track
+        # Draw background track with modern styling
         self.canvas.create_rectangle(
             track_start, track_y - self.track_height // 2,
             track_end, track_y + self.track_height // 2,
-            fill=self.track_bg, outline='', tags='track_bg'
+            fill=self.COLORS['track_bg'], 
+            outline='',
+            tags='track_bg'
         )
         
         # Draw selected range
@@ -204,81 +226,100 @@ class TimeRangeSelector(ttk.Frame):
             self.canvas.create_rectangle(
                 self.start_handle_x, track_y - self.track_height // 2,
                 self.end_handle_x, track_y + self.track_height // 2,
-                fill=self.track_selected, outline='', tags='track_selected'
+                fill=self.COLORS['track_selected'], 
+                outline='',
+                tags='track_selected'
             )
         
-        # Draw start handle
+        # Draw compact start handle with shadow
+        # Shadow
+        self.canvas.create_oval(
+            self.start_handle_x - self.handle_size // 2 + 1,
+            track_y - self.handle_size // 2 + 1,
+            self.start_handle_x + self.handle_size // 2 + 1,
+            track_y + self.handle_size // 2 + 1,
+            fill=self.COLORS['handle_shadow'], 
+            outline='',
+            tags='start_handle_shadow'
+        )
+        
+        # Handle
         self.canvas.create_oval(
             self.start_handle_x - self.handle_size // 2,
             track_y - self.handle_size // 2,
             self.start_handle_x + self.handle_size // 2,
             track_y + self.handle_size // 2,
-            fill=self.handle_color, outline=self.handle_border, width=3,
+            fill=self.COLORS['handle_bg'], 
+            outline=self.COLORS['handle_border'], 
+            width=2,
             tags='start_handle'
         )
         
-        # Draw end handle
+        # Handle center dot
+        self.canvas.create_oval(
+            self.start_handle_x - 2,
+            track_y - 2,
+            self.start_handle_x + 2,
+            track_y + 2,
+            fill=self.COLORS['handle_border'], 
+            outline='',
+            tags='start_handle_dot'
+        )
+        
+        # Draw compact end handle with shadow
+        # Shadow
+        self.canvas.create_oval(
+            self.end_handle_x - self.handle_size // 2 + 1,
+            track_y - self.handle_size // 2 + 1,
+            self.end_handle_x + self.handle_size // 2 + 1,
+            track_y + self.handle_size // 2 + 1,
+            fill=self.COLORS['handle_shadow'], 
+            outline='',
+            tags='end_handle_shadow'
+        )
+        
+        # Handle
         self.canvas.create_oval(
             self.end_handle_x - self.handle_size // 2,
             track_y - self.handle_size // 2,
             self.end_handle_x + self.handle_size // 2,
             track_y + self.handle_size // 2,
-            fill=self.handle_color, outline=self.handle_border, width=3,
+            fill=self.COLORS['handle_bg'], 
+            outline=self.COLORS['handle_border'], 
+            width=2,
             tags='end_handle'
         )
         
-        # Draw start/end labels (session time range)
+        # Handle center dot
+        self.canvas.create_oval(
+            self.end_handle_x - 2,
+            track_y - 2,
+            self.end_handle_x + 2,
+            track_y + 2,
+            fill=self.COLORS['handle_border'], 
+            outline='',
+            tags='end_handle_dot'
+        )
+        
+        # Draw compact time labels
         self.canvas.create_text(
-            track_start, track_y + 25,
+            track_start, track_y + 18,
             text=self.min_time.strftime("%H:%M:%S"),
-            font=('Arial', 8), fill='gray'
+            font=('Segoe UI', 7),
+            fill=self.COLORS['text_secondary']
         )
         
         self.canvas.create_text(
-            track_end, track_y + 25,
+            track_end, track_y + 18,
             text=self.max_time.strftime("%H:%M:%S"),
-            font=('Arial', 8), fill='gray'
-        )
-        
-        # Draw handle labels
-        self.canvas.create_text(
-            self.start_handle_x, track_y - 15,
-            text="START", font=('Arial', 7), fill=self.handle_border
-        )
-        
-        self.canvas.create_text(
-            self.end_handle_x, track_y - 15,
-            text="END", font=('Arial', 7), fill=self.handle_border
+            font=('Segoe UI', 7),
+            fill=self.COLORS['text_secondary']
         )
     
     def update_time_displays(self):
-        """Update the time display labels"""
-        if self.current_start and self.current_end and self.min_time and self.max_time:
-            # Show actual session times
-            self.start_time_var.set(self.current_start.strftime("%H:%M:%S"))
-            self.end_time_var.set(self.current_end.strftime("%H:%M:%S"))
-            
-            # Calculate and display duration
-            duration = self.current_end - self.current_start
-            total_seconds = int(duration.total_seconds())
-            
-            hours = total_seconds // 3600
-            minutes = (total_seconds % 3600) // 60
-            seconds = total_seconds % 60
-            
-            if hours > 0:
-                duration_str = f"{hours}h {minutes}m {seconds}s"
-            elif minutes > 0:
-                duration_str = f"{minutes}m {seconds}s"
-            else:
-                duration_str = f"{seconds}s"
-            
-            self.duration_var.set(duration_str)
-        else:
-            # No session data yet
-            self.start_time_var.set("--:--:--")
-            self.end_time_var.set("--:--:--")
-            self.duration_var.set("Select a session")
+        """Update time displays - simplified for compact version"""
+        # This method is kept for compatibility but displays are now handled externally
+        pass
     
     def get_handle_at_position(self, x: float, y: float) -> Optional[str]:
         """Determine which handle (if any) is at the given position"""
@@ -307,11 +348,11 @@ class TimeRangeSelector(ttk.Frame):
             self.dragging = handle
             self.canvas.config(cursor='hand2')
             
-            # Highlight the active handle
+            # Highlight the active handle with modern styling
             if handle == 'start':
-                self.canvas.itemconfig('start_handle', outline=self.handle_active, width=4)
+                self.canvas.itemconfig('start_handle', outline=self.COLORS['accent_hover'], width=4)
             else:
-                self.canvas.itemconfig('end_handle', outline=self.handle_active, width=4)
+                self.canvas.itemconfig('end_handle', outline=self.COLORS['accent_hover'], width=4)
     
     def on_mouse_drag(self, event):
         """Handle mouse drag"""
@@ -330,7 +371,6 @@ class TimeRangeSelector(ttk.Frame):
             self.current_end = self.calculate_time_from_position(self.end_handle_x)
         
         self.draw_slider()
-        self.update_time_displays()
         
         # Notify about change
         if self.on_range_change:
@@ -340,8 +380,8 @@ class TimeRangeSelector(ttk.Frame):
         """Handle mouse button up"""
         if self.dragging:
             # Reset handle appearance
-            self.canvas.itemconfig('start_handle', outline=self.handle_border, width=3)
-            self.canvas.itemconfig('end_handle', outline=self.handle_border, width=3)
+            self.canvas.itemconfig('start_handle', outline=self.COLORS['handle_border'], width=3)
+            self.canvas.itemconfig('end_handle', outline=self.COLORS['handle_border'], width=3)
         
         self.dragging = None
         self.canvas.config(cursor='')
@@ -367,7 +407,6 @@ class TimeRangeSelector(ttk.Frame):
             self.current_end = self.max_time
             self.calculate_handle_positions()
             self.draw_slider()
-            self.update_time_displays()
             
             if self.on_range_change:
                 self.on_range_change(self.current_start, self.current_end)
@@ -391,4 +430,3 @@ class TimeRangeSelector(ttk.Frame):
             
             self.calculate_handle_positions()
             self.draw_slider()
-            self.update_time_displays()
