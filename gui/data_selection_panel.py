@@ -63,14 +63,13 @@ class DataSelectionPanel(ttk.Frame):
         main_frame = tk.Frame(self, bg=self.COLORS['bg_primary'])
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Header section
-        self.create_header(main_frame)
-        
+        # Plot options
+        self.create_plot_options(main_frame)
+
         # Data selection area
         self.create_data_selection_area(main_frame)
         
-        # Plot options
-        self.create_plot_options(main_frame)
+
     
     def create_header(self, parent):
         """Create compact header"""

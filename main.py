@@ -4,6 +4,22 @@ Drone Log Analyzer - Main Entry Point
 Author: Assistant
 Description: Main application entry point for the drone log visualization tool
 """
+import sys
+
+if sys.platform.startswith("win"):
+    try:
+        import ctypes
+        # PROCESS_PER_MONITOR_DPI_AWARE = 2 
+        # (on Windows 8.1+ this gives per‐monitor DPI awareness).
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        # Fallback to the older, system‐wide awareness if available:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
+
 
 import tkinter as tk
 from gui.main_window import DroneLogAnalyzer

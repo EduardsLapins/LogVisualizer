@@ -47,7 +47,7 @@ class TimeRangeSelector(ttk.Frame):
         #    Slider dimensions (we bump height from 35→60)
         # -------------------------------------------------------
         self.slider_width = 400
-        self.slider_height = 60    # was 35 → now 60
+        self.slider_height = 20
         self.handle_size = 16
         self.track_height = 6
         self.margin = 20

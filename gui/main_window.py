@@ -216,24 +216,38 @@ class DroneLogAnalyzer:
         )
         self.data_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Right = plot area (takes remaining space)
-        plot_container = tk.Frame(content_frame, bg=self.COLORS['bg_primary'],
-                                  relief='flat', bd=1, highlightbackground=self.COLORS['border'])
+        # Right = plot area
+        plot_container = tk.Frame(
+            content_frame,
+            bg=self.COLORS['bg_primary'],
+            relief='flat', bd=1,
+            highlightbackground=self.COLORS['border']
+        )
+        # Also give expand=True & fill=tk.BOTH here:
         plot_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
 
         self.create_plot_area(plot_container)
 
         # Status bar at the bottom
         self.create_status_bar(main_frame)
 
-    def create_top_control_bar(self, parent):
-        """Create horizontal control bar with session and time controls"""
-        control_container = tk.Frame(parent, bg=self.COLORS['bg_primary'],
-                                     relief='flat', bd=1, highlightbackground=self.COLORS['border'])
-        control_container.pack(fill=tk.X, pady=(0, 20))
 
+    def create_top_control_bar(self, parent):
+        """Create a slimmer control bar with session & time controls"""
+        # 1) Remove large bottom padding; just give a small gap below.
+        control_container = tk.Frame(
+            parent,
+            bg=self.COLORS['bg_primary'],
+            relief='flat',
+            bd=1,
+            highlightbackground=self.COLORS['border']
+        )
+        control_container.pack(fill=tk.X, pady=(0, 5))   # was (0,20)
+
+        # 2) Inside, reduce the vertical padding
         control_content = tk.Frame(control_container, bg=self.COLORS['bg_primary'])
-        control_content.pack(fill=tk.X, padx=20, pady=20)
+        control_content.pack(fill=tk.X, padx=20, pady=5)  # was pady=20
 
         # Session controls on left
         session_section = tk.Frame(control_content, bg=self.COLORS['bg_primary'])
@@ -245,85 +259,238 @@ class DroneLogAnalyzer:
         time_section.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=(30, 0))
         self.create_compact_time_controls(time_section)
 
+
     def create_compact_session_controls(self, parent):
-        """Create compact session controls for the top bar"""
-        # Header
+        """Create a slimmer session‐controls block (left side of top bar)"""
+        # 1) Header: shrink any extra vertical padding
         header_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'])
-        header_frame.pack(fill=tk.X, pady=(0, 10))
-        tk.Label(header_frame,
-                 text="📁 Session Control",
-                 bg=self.COLORS['bg_primary'],
-                 fg=self.COLORS['text_primary'],
-                 font=('Segoe UI', 11, 'bold')).pack(side=tk.LEFT)
+        header_frame.pack(fill=tk.X, pady=(0, 5))  # was pady=(0,10)
 
-        # Folder selection
+        tk.Label(
+            header_frame,
+            text="📁 Session Control",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_primary'],
+            font=('Segoe UI', 10, 'bold')   # was 11→10
+        ).pack(side=tk.LEFT, pady=3)         # was pady=(0,10)
+
+        # 2) Folder selection row: shrink vertical gaps
         folder_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'])
-        folder_frame.pack(fill=tk.X, pady=(0, 8))
-        tk.Label(folder_frame,
-                 text="Folder:",
-                 bg=self.COLORS['bg_primary'],
-                 fg=self.COLORS['text_secondary'],
-                 font=('Segoe UI', 9),
-                 width=8).pack(side=tk.LEFT)
+        folder_frame.pack(fill=tk.X, pady=(0, 5))  # was pady=(0,8)
 
-        self.folder_entry = tk.Entry(folder_frame,
-                                     textvariable=self.folder_var,
-                                     state='readonly',
-                                     bg=self.COLORS['bg_tertiary'],
-                                     fg=self.COLORS['text_primary'],
-                                     font=('Segoe UI', 9),
-                                     relief='flat',
-                                     bd=1,
-                                     highlightbackground=self.COLORS['border'],
-                                     highlightthickness=1)
+        tk.Label(
+            folder_frame,
+            text="Folder:",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_secondary'],
+            font=('Segoe UI', 8),
+            width=8
+        ).pack(side=tk.LEFT)
+
+        self.folder_entry = tk.Entry(
+            folder_frame,
+            textvariable=self.folder_var,
+            state='readonly',
+            bg=self.COLORS['bg_tertiary'],
+            fg=self.COLORS['text_primary'],
+            font=('Segoe UI', 9),
+            relief='flat',
+            bd=1,
+            highlightbackground=self.COLORS['border'],
+            highlightthickness=1
+        )
         self.folder_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 8))
 
-        browse_btn = tk.Button(folder_frame,
-                               text="Browse",
-                               command=self.browse_folder,
-                               bg=self.COLORS['accent'],
-                               fg='white',
-                               font=('Segoe UI', 8),
-                               relief='flat',
-                               borderwidth=0,
-                               padx=12, pady=4,
-                               cursor='hand2')
+        browse_btn = tk.Button(
+            folder_frame,
+            text="Browse",
+            command=self.browse_folder,
+            bg=self.COLORS['accent'],
+            fg='white',
+            font=('Segoe UI', 8),
+            relief='flat',
+            borderwidth=0,
+            padx=12, pady=4,
+            cursor='hand2'
+        )
         browse_btn.pack(side=tk.RIGHT)
 
-        # Session dropdown
+        # 3) Session dropdown row: shrink vertical gaps
         session_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'])
         session_frame.pack(fill=tk.X)
-        tk.Label(session_frame,
-                 text="Session:",
-                 bg=self.COLORS['bg_primary'],
-                 fg=self.COLORS['text_secondary'],
-                 font=('Segoe UI', 9),
-                 width=8).pack(side=tk.LEFT)
 
-        self.session_combo = ttk.Combobox(session_frame,
-                                          textvariable=self.session_var,
-                                          state='readonly',
-                                          font=('Segoe UI', 9))
+        tk.Label(
+            session_frame,
+            text="Session:",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_secondary'],
+            font=('Segoe UI', 8),
+            width=8
+        ).pack(side=tk.LEFT)
+
+        self.session_combo = ttk.Combobox(
+            session_frame,
+            textvariable=self.session_var,
+            state='readonly',
+            font=('Segoe UI', 9)
+        )
         self.session_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 8))
         self.session_combo.bind('<<ComboboxSelected>>', self._on_session_selected)
 
-        refresh_btn = tk.Button(session_frame,
-                                text="↻",
-                                command=self.refresh_sessions,
-                                bg=self.COLORS['bg_tertiary'],
-                                fg=self.COLORS['text_primary'],
-                                font=('Segoe UI', 10),
-                                relief='flat',
-                                borderwidth=1,
-                                highlightbackground=self.COLORS['border'],
-                                width=3,
-                                padx=4, pady=4,
-                                cursor='hand2')
+        refresh_btn = tk.Button(
+            session_frame,
+            text="↻",
+            command=self.refresh_sessions,
+            bg=self.COLORS['bg_tertiary'],
+            fg=self.COLORS['text_primary'],
+            font=('Segoe UI', 10),
+            relief='flat',
+            borderwidth=1,
+            highlightbackground=self.COLORS['border'],
+            width=3,
+            padx=4, pady=4,
+            cursor='hand2'
+        )
         refresh_btn.pack(side=tk.RIGHT)
 
         # Hover effects
         self.add_hover_effect(browse_btn, self.COLORS['accent'], self.COLORS['accent_hover'])
         self.add_hover_effect(refresh_btn, self.COLORS['bg_tertiary'], self.COLORS['border'])
+
+        # Tooltips (no change needed—just keep them)
+
+
+    def create_compact_time_controls(self, parent):
+        """Create a slimmer time‐controls block (right side of top bar)"""
+        # 1) Header: shrink vertical padding
+        header_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'])
+        header_frame.pack(fill=tk.X, pady=(0, 5))  # was pady=(0,10)
+
+        tk.Label(
+            header_frame,
+            text="⏱️ Time Range",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_primary'],
+            font=('Segoe UI', 10, 'bold')  # was 11→10
+        ).pack(side=tk.LEFT)
+
+        # 2) Time display row: reduce vertical padding around labels
+        time_display_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'])
+        time_display_frame.pack(fill=tk.X, pady=(0, 5))  # was (0,8)
+
+        # Start
+        start_frame = tk.Frame(time_display_frame, bg=self.COLORS['bg_primary'])
+        start_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        tk.Label(
+            start_frame,
+            text="Start:",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_secondary'],
+            font=('Segoe UI', 7)  # was 8→7
+        ).pack(anchor=tk.W)
+        self.start_time_var = tk.StringVar(value="--:--:--")
+        tk.Label(
+            start_frame,
+            textvariable=self.start_time_var,
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['accent'],
+            font=('Segoe UI', 9, 'bold')  # was 10→9
+        ).pack(anchor=tk.W)
+
+        # Duration
+        duration_frame = tk.Frame(time_display_frame, bg=self.COLORS['bg_primary'])
+        duration_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=20)
+        tk.Label(
+            duration_frame,
+            text="Duration:",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_secondary'],
+            font=('Segoe UI', 7)  # was 8→7
+        ).pack()
+        self.duration_var = tk.StringVar(value="--")
+        tk.Label(
+            duration_frame,
+            textvariable=self.duration_var,
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['warning'],
+            font=('Segoe UI', 9, 'bold')  # was 10→9
+        ).pack()
+
+        # End
+        end_frame = tk.Frame(time_display_frame, bg=self.COLORS['bg_primary'])
+        end_frame.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+        tk.Label(
+            end_frame,
+            text="End:",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_secondary'],
+            font=('Segoe UI', 7)  # was 8→7
+        ).pack(anchor=tk.E)
+        self.end_time_var = tk.StringVar(value="--:--:--")
+        tk.Label(
+            end_frame,
+            textvariable=self.end_time_var,
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['accent'],
+            font=('Segoe UI', 9, 'bold')  # was 10→9
+        ).pack(anchor=tk.E)
+
+        # ── Integrate TimeRangeSelector (slider) ──────────────────────────
+        self.time_selector = TimeRangeSelector(
+            parent,
+            on_range_change=self._on_time_range_changed
+        )
+        # Keep the slider_height bump (60) so labels above don’t get clipped:
+        self.time_selector.slider_height = 60
+        self.time_selector.pack(fill=tk.X, pady=(0, 0))  # was no change
+
+        # ── “Step (s)” Entry under the slider ───────────────────────────────
+        split_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'])
+        split_frame.pack(fill=tk.X, pady=(5, 0))  # minimal vertical gap
+
+        tk.Label(
+            split_frame,
+            text="Step (s):",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_secondary'],
+            font=('Segoe UI', 7)  # was 8→7
+        ).pack(side=tk.LEFT, padx=(10, 5))
+
+        self.time_split_var = tk.StringVar(value="1")
+        split_entry = tk.Entry(
+            split_frame,
+            textvariable=self.time_split_var,
+            width=4,
+            font=('Segoe UI', 9),
+            relief='solid',
+            bd=1,
+            highlightbackground=self.COLORS['border'],
+            highlightthickness=1
+        )
+        split_entry.pack(side=tk.LEFT)
+
+        def on_split_enter(event=None):
+            raw = self.time_split_var.get().strip()
+            try:
+                secs = int(raw)
+                if secs <= 0:
+                    raise ValueError
+                if hasattr(self.time_selector, 'set_step'):
+                    self.time_selector.set_step(secs)
+                    self.status_var.set(f"Time‐split set to {secs} s")
+                else:
+                    messagebox.showwarning(
+                        "Unsupported",
+                        "This TimeRangeSelector version cannot change step dynamically."
+                    )
+            except ValueError:
+                messagebox.showerror(
+                    "Invalid Input",
+                    "Please enter a positive integer for seconds."
+                )
+
+        split_entry.bind('<Return>', on_split_enter)
+        split_entry.bind('<FocusOut>', on_split_enter)
 
     def browse_folder(self):
         """Handle folder browse button click"""
@@ -480,20 +647,23 @@ class DroneLogAnalyzer:
         version_label.pack(side=tk.LEFT, padx=(10, 0), pady=15)
 
     def create_plot_area(self, parent):
-        """Create the plotting area with modern styling"""
+        """Create the plotting area with modern styling, but let the figure resize dynamically."""
         # Plot header
-        plot_header = tk.Frame(parent, bg=self.COLORS['bg_primary'], height=45)
+        plot_header = tk.Frame(parent, bg=self.COLORS['bg_primary'])
         plot_header.pack(fill=tk.X, padx=15, pady=(15, 0))
         plot_header.pack_propagate(False)
 
-        tk.Label(plot_header,
-                 text="📊 Data Visualization",
-                 bg=self.COLORS['bg_primary'],
-                 fg=self.COLORS['text_primary'],
-                 font=('Segoe UI', 12, 'bold')).pack(side=tk.LEFT, pady=12)
+        tk.Label(
+            plot_header,
+            text="📊 Data Visualization",
+            bg=self.COLORS['bg_primary'],
+            fg=self.COLORS['text_primary'],
+            font=('Segoe UI', 12, 'bold')
+        ).pack(side=tk.LEFT, pady=12)
 
-        # Create matplotlib Figure
-        self.figure = Figure(figsize=(10, 6), dpi=100,
+        # Create a Figure with a small default size
+        # (we'll override it on every resize)
+        self.figure = Figure(figsize=(2, 2), dpi=100,  # smaller default → 200×200 px
                              facecolor=self.COLORS['bg_primary'],
                              edgecolor=self.COLORS['border'])
         self.plot_manager = PlotManager(self.figure)
@@ -504,8 +674,8 @@ class DroneLogAnalyzer:
 
         # Embed the Figure in a Tkinter widget
         self.canvas = FigureCanvasTkAgg(self.figure, master=canvas_container)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        widget = self.canvas.get_tk_widget()
+        widget.pack(fill=tk.BOTH, expand=True)
 
         # Compact toolbar
         toolbar_frame = tk.Frame(canvas_container, bg=self.COLORS['bg_tertiary'], height=40)
@@ -515,6 +685,30 @@ class DroneLogAnalyzer:
         toolbar = NavigationToolbar2Tk(self.canvas, toolbar_frame)
         toolbar.update()
         self.add_custom_toolbar_buttons(toolbar_frame)
+
+        # ─────── DYNAMIC RESIZE HANDLER ─────────────────────────
+        # Whenever the canvas widget is resized, recompute figsize and redraw.
+        def _on_canvas_config(event):
+            # event.width / event.height are the new size of the canvas in pixels
+            dpi = self.figure.get_dpi()
+            # Avoid zero‐division and ignore spurious tiny events:
+            if event.width < 10 or event.height < 10:
+                return
+
+            # Compute new size in inches, leave a small margin for toolbar/header/padding
+            new_w_in = event.width / dpi
+            new_h_in = (event.height - toolbar_frame.winfo_height()) / dpi
+
+            # Only update if the size has meaningfully changed
+            old_w, old_h = self.figure.get_size_inches()
+            if abs(old_w - new_w_in) > 0.1 or abs(old_h - new_h_in) > 0.1:
+                self.figure.set_size_inches(new_w_in, new_h_in, forward=True)
+                self.canvas.draw_idle()
+
+        # Bind the resize handler to the canvas widget
+        widget.bind("<Configure>", _on_canvas_config)
+        # ──────────────────────────────────────────────────────────
+
 
     def add_custom_toolbar_buttons(self, toolbar_frame):
         """Add modern custom buttons to toolbar"""
