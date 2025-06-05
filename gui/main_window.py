@@ -665,10 +665,11 @@ class DroneLogAnalyzer:
         ).pack(side=tk.LEFT, pady=12)
 
         # Create a Figure with a small default size
-        # (we'll override it on every resize)
-        self.figure = Figure(figsize=(2, 2), dpi=100,  # smaller default → 200×200 px
-                             facecolor=self.COLORS['bg_primary'],
-                             edgecolor=self.COLORS['border'])
+        self.figure = Figure(
+            figsize=(2, 2), dpi=100,  # small default
+            facecolor=self.COLORS['bg_primary'],
+            edgecolor=self.COLORS['border']
+        )
         self.plot_manager = PlotManager(self.figure)
 
         # Canvas container
@@ -680,6 +681,14 @@ class DroneLogAnalyzer:
         widget = self.canvas.get_tk_widget()
         widget.pack(fill=tk.BOTH, expand=True)
 
+        # ─── Add this block to force a “real‐size” redraw once the canvas is first shown ─────────
+        def _on_first_map(event):
+            widget.unbind("<Map>")   # unbind immediately so it only runs once
+            self.canvas.draw()       # force Matplotlib to redraw at the correct size
+
+        widget.bind("<Map>", _on_first_map)
+        # ──────────────────────────────────────────────────────────────────────────────────────────
+
         # Compact toolbar
         toolbar_frame = tk.Frame(canvas_container, bg=self.COLORS['bg_tertiary'], height=40)
         toolbar_frame.pack(fill=tk.X, pady=(8, 0))
@@ -689,24 +698,7 @@ class DroneLogAnalyzer:
         toolbar.update()
         self.add_custom_toolbar_buttons(toolbar_frame)
 
-        # ─────── DYNAMIC RESIZE HANDLER ─────────────────────────
-        # Whenever the canvas widget is resized, recompute figsize and redraw.
-        def _on_canvas_config(event):
-            # event.width / event.height are the new size of the canvas in pixels
-            dpi = self.figure.get_dpi()
-            # Avoid zero‐division and ignore spurious tiny events:
-            if event.width < 10 or event.height < 10:
-                return
 
-            # Compute new size in inches, leave a small margin for toolbar/header/padding
-            new_w_in = event.width / dpi
-            new_h_in = (event.height - toolbar_frame.winfo_height()) / dpi
-
-            # Only update if the size has meaningfully changed
-            old_w, old_h = self.figure.get_size_inches()
-            if abs(old_w - new_w_in) > 0.1 or abs(old_h - new_h_in) > 0.1:
-                self.figure.set_size_inches(new_w_in, new_h_in, forward=True)
-                self.canvas.draw_idle()
 
 
     def add_custom_toolbar_buttons(self, toolbar_frame):

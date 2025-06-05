@@ -5,22 +5,6 @@ Author: Assistant
 Description: Main application entry point for the drone log visualization tool
 """
 import sys
-
-if sys.platform.startswith("win"):
-    try:
-        import ctypes
-        # PROCESS_PER_MONITOR_DPI_AWARE = 2 
-        # (on Windows 8.1+ this gives per‐monitor DPI awareness).
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    except Exception:
-        # Fallback to the older, system‐wide awareness if available:
-        try:
-            ctypes.windll.user32.SetProcessDPIAware()
-        except Exception:
-            pass
-
-
-
 import tkinter as tk
 from gui.main_window import DroneLogAnalyzer
 
@@ -28,18 +12,39 @@ def main():
     """Main application entry point"""
     root = tk.Tk()
     
-    # Set application icon and properties
-    root.title("Drone Log Analyzer v2.0")
-    root.geometry("1920x1080")
-    root.minsize(1000, 600)
+    # ─── Make the app DPI‐aware on Windows ────────────────────────────────
+    if sys.platform.startswith("win"):
+        try:
+            import ctypes
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        except Exception:
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
     
-    # Center the window
+    # ─── Instead of a hard‐coded 1920x1080, size to 90% of the real screen ─
     root.update_idletasks()
-    x = (root.winfo_screenwidth() // 2) - (root.winfo_width() // 2)
-    y = (root.winfo_screenheight() // 2) - (root.winfo_height() // 2)
-    root.geometry(f"+{x}+{y}")
+    screen_w = root.winfo_screenwidth()
+    screen_h = root.winfo_screenheight()
     
-    # Create and run the application
+    # Choose 90% of each dimension (you can tweak 0.9 up or down)
+    window_w = int(screen_w * 0.9)
+    window_h = int(screen_h * 0.9)
+    
+    # Center on screen
+    x = (screen_w - window_w) // 2
+    y = (screen_h - window_h) // 2
+    
+    root.geometry(f"{window_w}x{window_h}+{x}+{y}")
+    root.minsize(800, 500)
+    
+    # If you prefer “fully maximized” on Windows, you could do:
+    # if sys.platform.startswith("win"):
+    #     root.state('zoomed')
+    
+    # ─── Set title, then create the app ────────────────────────────────────
+    root.title("Drone Log Analyzer v2.0")
     app = DroneLogAnalyzer(root)
     
     try:

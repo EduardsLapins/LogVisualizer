@@ -217,8 +217,6 @@ class PlotManager:
             self._create_empty_state()
             return
         
-        # Set appropriate figure size for combined plot
-        self.figure.set_size_inches(12, 7)
         
         ax = self.figure.add_subplot(111)
         
@@ -280,10 +278,6 @@ class PlotManager:
             self._create_empty_state()
             return
         
-        # Adjust figure size dynamically for better readability
-        fig_width = 12
-        fig_height = max(6, min(n_groups * 3, 16))  # Scale height but cap at 16
-        self.figure.set_size_inches(fig_width, fig_height)
         
         # Create subplots with better spacing
         for i, (group_name, group_data) in enumerate(groups.items()):
