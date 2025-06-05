@@ -258,7 +258,7 @@ class PlotManager:
         ax.margins(x=0.01, y=0.03)
         
         # Improved layout
-        self.figure.tight_layout(rect=[0, 0.03, 0.85, 0.97])
+        self.figure.tight_layout(rect=[0, 0.03, 1, 0.97])
         
         # Force a redraw
         self.figure.canvas.draw_idle()

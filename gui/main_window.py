@@ -226,11 +226,14 @@ class DroneLogAnalyzer:
         # Also give expand=True & fill=tk.BOTH here:
         plot_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-
         self.create_plot_area(plot_container)
 
         # Status bar at the bottom
         self.create_status_bar(main_frame)
+
+
+        self.root.update_idletasks()
+        self.canvas.draw()
 
 
     def create_top_control_bar(self, parent):
@@ -704,10 +707,6 @@ class DroneLogAnalyzer:
             if abs(old_w - new_w_in) > 0.1 or abs(old_h - new_h_in) > 0.1:
                 self.figure.set_size_inches(new_w_in, new_h_in, forward=True)
                 self.canvas.draw_idle()
-
-        # Bind the resize handler to the canvas widget
-        widget.bind("<Configure>", _on_canvas_config)
-        # ──────────────────────────────────────────────────────────
 
 
     def add_custom_toolbar_buttons(self, toolbar_frame):
