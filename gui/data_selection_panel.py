@@ -113,29 +113,52 @@ class DataSelectionPanel(ttk.Frame):
         # Selection count badge
         self.selection_count_var = tk.StringVar(value="0")
         count_label = tk.Label(header_frame,
-                             textvariable=self.selection_count_var,
-                             bg=self.COLORS['accent'],
-                             fg='white',
-                             font=('Segoe UI', 8, 'bold'),
-                             padx=8, pady=2)
+                            textvariable=self.selection_count_var,
+                            bg=self.COLORS['accent'],
+                            fg='white',
+                            font=('Segoe UI', 8, 'bold'),
+                            padx=8, pady=2)
         count_label.pack(side=tk.RIGHT)
         
-        # Create FIXED scrollable area
-        scroll_container = tk.Frame(selection_container, bg=self.COLORS['bg_secondary'])
+        # Create FIXED scrollable area with VISIBLE border
+        scroll_container = tk.Frame(selection_container, bg=self.COLORS['accent'],  # Blue border
+                                relief='solid', bd=2)  # 2px border
         scroll_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
         
-        # Create canvas and scrollbar with proper sizing
-        self.canvas = tk.Canvas(scroll_container, 
-                               bg=self.COLORS['bg_primary'],
-                               highlightthickness=0,
-                               relief='flat',
-                               height=400)  # Fixed height to ensure proper scrolling
+        # Create inner frame with padding
+        inner_frame = tk.Frame(scroll_container, bg=self.COLORS['bg_primary'])
+        inner_frame.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         
-        self.scrollbar = ttk.Scrollbar(scroll_container, orient="vertical", command=self.canvas.yview)
+        # Create canvas with visible border
+        self.canvas = tk.Canvas(inner_frame, 
+                            bg=self.COLORS['bg_primary'],
+                            highlightthickness=1,
+                            highlightbackground=self.COLORS['border'],
+                            relief='solid',
+                            bd=0,
+                            height=250)  # Smaller height to ensure scrolling
         
-        # Create the scrollable frame
+        # Create HIGHLY VISIBLE scrollbar container
+        self.scrollbar_container = tk.Frame(inner_frame, bg=self.COLORS['accent_light'], width=25)
+        self.scrollbar_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(3, 0))
+        self.scrollbar_container.pack_propagate(False)
+        
+        # Add scroll indicators
+        tk.Label(self.scrollbar_container, text="▲", bg=self.COLORS['accent_light'], fg=self.COLORS['accent'], 
+                font=('Arial', 10, 'bold')).pack(pady=(2, 0))
+        
+        self.scrollbar = ttk.Scrollbar(self.scrollbar_container, 
+                                    orient="vertical", 
+                                    command=self.canvas.yview)
+        self.scrollbar.pack(fill=tk.BOTH, expand=True, padx=3, pady=2)
+        
+        tk.Label(self.scrollbar_container, text="▼", bg=self.COLORS['accent_light'], fg=self.COLORS['accent'],
+                font=('Arial', 10, 'bold')).pack(pady=(0, 2))
+        
+
         self.scrollable_frame = tk.Frame(self.canvas, bg=self.COLORS['bg_primary'])
-        
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
         # Configure scrolling properly
         def configure_scrollregion(event=None):
             self.canvas.configure(scrollregion=self.canvas.bbox("all"))

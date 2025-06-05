@@ -13,8 +13,8 @@ def main():
     root = tk.Tk()
     
     # Set application icon and properties
-    root.title("Drone Log Analyzer v1.0")
-    root.geometry("1400x900")
+    root.title("Drone Log Analyzer v2.0")
+    root.geometry("1920x1080")
     root.minsize(1000, 600)
     
     # Center the window
