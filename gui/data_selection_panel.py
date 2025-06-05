@@ -1,5 +1,5 @@
 """
-Data Selection Panel GUI Component
+Data Selection Panel GUI Component - FIXED VERSION
 Handles data series selection and plot options
 """
 
@@ -44,28 +44,28 @@ class DataSelectionPanel(ttk.Frame):
         self.separate_plots_var = tk.BooleanVar(value=False)
         self.show_grid_var = tk.BooleanVar(value=True)
         
-        # GUI components - initialize canvas and scrollbar
+        # GUI components - initialize properly
         self.canvas = None
         self.scrollbar = None
         self.scrollable_frame = None
         self.canvas_window = None
+        self.selection_count_var = None
         
-        # Configure styling
-        self.configure(style='Card.TFrame')
-        
+        # Create widgets
         self.create_widgets()
     
     def create_widgets(self):
         """Create all panel widgets with modern styling"""
-        # Set minimum width - more compact
-        self.configure(width=300)  # Reduced from 320
+        # Set minimum width
+        self.configure(width=300)
         
         # Main container
         main_frame = tk.Frame(self, bg=self.COLORS['bg_primary'])
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Header section - more compact
+        # Header section
         self.create_header(main_frame)
+        
         # Data selection area
         self.create_data_selection_area(main_frame)
         
@@ -74,8 +74,8 @@ class DataSelectionPanel(ttk.Frame):
     
     def create_header(self, parent):
         """Create compact header"""
-        header_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'], height=45)  # Reduced height
-        header_frame.pack(fill=tk.X, padx=15, pady=(10, 0))  # Reduced padding
+        header_frame = tk.Frame(parent, bg=self.COLORS['bg_primary'], height=45)
+        header_frame.pack(fill=tk.X, padx=15, pady=(10, 0))
         header_frame.pack_propagate(False)
         
         # Title
@@ -83,20 +83,19 @@ class DataSelectionPanel(ttk.Frame):
                              text="📊 Data Selection",
                              bg=self.COLORS['bg_primary'],
                              fg=self.COLORS['text_primary'],
-                             font=('Segoe UI', 11, 'bold'))  # Slightly smaller font
-        title_label.pack(anchor=tk.W, pady=(8, 0))  # Reduced padding
+                             font=('Segoe UI', 11, 'bold'))
+        title_label.pack(anchor=tk.W, pady=(8, 0))
         
         # Subtitle
         subtitle_label = tk.Label(header_frame,
                                 text="Choose data series to visualize",
                                 bg=self.COLORS['bg_primary'],
                                 fg=self.COLORS['text_secondary'],
-                                font=('Segoe UI', 8))  # Smaller font
+                                font=('Segoe UI', 8))
         subtitle_label.pack(anchor=tk.W, pady=(2, 0))
-    
 
     def create_data_selection_area(self, parent):
-        """Create modern scrollable data selection area"""
+        """Create FIXED scrollable data selection area"""
         selection_container = tk.Frame(parent, bg=self.COLORS['bg_secondary'])
         selection_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=(10, 0))
         
@@ -120,80 +119,59 @@ class DataSelectionPanel(ttk.Frame):
                             padx=8, pady=2)
         count_label.pack(side=tk.RIGHT)
         
-        # Create FIXED scrollable area with VISIBLE border
-        scroll_container = tk.Frame(selection_container, bg=self.COLORS['accent'],  # Blue border
-                                relief='solid', bd=2)  # 2px border
+        # Create main scroll area
+        scroll_container = tk.Frame(selection_container, bg=self.COLORS['accent'], relief='solid', bd=1)
         scroll_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
         
-        # Create inner frame with padding
-        inner_frame = tk.Frame(scroll_container, bg=self.COLORS['bg_primary'])
-        inner_frame.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        # Create canvas and scrollbar PROPERLY
+        self.canvas = tk.Canvas(scroll_container, 
+                               bg=self.COLORS['bg_primary'],
+                               highlightthickness=0)
         
-        # Create canvas with visible border
-        self.canvas = tk.Canvas(inner_frame, 
-                            bg=self.COLORS['bg_primary'],
-                            highlightthickness=1,
-                            highlightbackground=self.COLORS['border'],
-                            relief='solid',
-                            bd=0,
-                            height=250)  # Smaller height to ensure scrolling
+        self.scrollbar = ttk.Scrollbar(scroll_container, orient="vertical", command=self.canvas.yview)
         
-        # Create HIGHLY VISIBLE scrollbar container
-        self.scrollbar_container = tk.Frame(inner_frame, bg=self.COLORS['accent_light'], width=25)
-        self.scrollbar_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(3, 0))
-        self.scrollbar_container.pack_propagate(False)
+        # IMPORTANT: Pack scrollbar first, then canvas
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
         
-        # Add scroll indicators
-        tk.Label(self.scrollbar_container, text="▲", bg=self.COLORS['accent_light'], fg=self.COLORS['accent'], 
-                font=('Arial', 10, 'bold')).pack(pady=(2, 0))
-        
-        self.scrollbar = ttk.Scrollbar(self.scrollbar_container, 
-                                    orient="vertical", 
-                                    command=self.canvas.yview)
-        self.scrollbar.pack(fill=tk.BOTH, expand=True, padx=3, pady=2)
-        
-        tk.Label(self.scrollbar_container, text="▼", bg=self.COLORS['accent_light'], fg=self.COLORS['accent'],
-                font=('Arial', 10, 'bold')).pack(pady=(0, 2))
-        
-
+        # Create scrollable frame
         self.scrollable_frame = tk.Frame(self.canvas, bg=self.COLORS['bg_primary'])
+        
+        # Create canvas window ONLY ONCE
         self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-
-        # Configure scrolling properly
-        def configure_scrollregion(event=None):
-            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         
-        def configure_canvas(event=None):
-            # Update the width of the scrollable frame to match canvas
-            canvas_width = event.width if event else self.canvas.winfo_width()
-            self.canvas.itemconfig(self.canvas_window, width=canvas_width)
-        
-        self.scrollable_frame.bind("<Configure>", configure_scrollregion)
-        self.canvas.bind("<Configure>", configure_canvas)
-        
-        # Create window in canvas
-        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        # Configure canvas scrolling
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
         
-        # Pack components with proper layout
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="right", fill="y")
+        # Bind configuration events SAFELY
+        def update_scrollregion(event=None):
+            try:
+                self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            except tk.TclError:
+                pass  # Widget might be destroyed
         
-        # FIXED mousewheel binding - bind to multiple widgets
+        def update_canvas_width(event=None):
+            try:
+                if self.canvas_window and event:
+                    self.canvas.itemconfig(self.canvas_window, width=event.width)
+            except tk.TclError:
+                pass  # Widget might be destroyed
+        
+        # Bind events
+        self.scrollable_frame.bind("<Configure>", update_scrollregion)
+        self.canvas.bind("<Configure>", update_canvas_width)
+        
+        # SIMPLIFIED mousewheel binding
         def on_mousewheel(event):
-            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            try:
+                self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            except:
+                pass
         
-        def bind_mousewheel(widget):
-            widget.bind("<MouseWheel>", on_mousewheel)  # Windows
-            widget.bind("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))  # Linux up
-            widget.bind("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))   # Linux down
-        
-        # Bind mousewheel to canvas and scrollable frame
-        bind_mousewheel(self.canvas)
-        bind_mousewheel(self.scrollable_frame)
-        
-        # Also bind to the main container to catch mouse events
-        bind_mousewheel(scroll_container)
+        # Bind mousewheel events safely
+        self.canvas.bind("<MouseWheel>", on_mousewheel)
+        self.canvas.bind("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))
+        self.canvas.bind("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))
     
     def create_plot_options(self, parent):
         """Create modern plot options controls"""
@@ -214,7 +192,7 @@ class DataSelectionPanel(ttk.Frame):
         options_frame = tk.Frame(options_container, bg=self.COLORS['bg_secondary'])
         options_frame.pack(fill=tk.X, padx=15, pady=(0, 15))
         
-        # Separate plots option with modern checkbox
+        # Separate plots option
         separate_frame = tk.Frame(options_frame, bg=self.COLORS['bg_secondary'])
         separate_frame.pack(fill=tk.X, pady=(0, 8))
         
@@ -249,127 +227,39 @@ class DataSelectionPanel(ttk.Frame):
                                relief='flat',
                                borderwidth=0)
         grid_cb.pack(anchor=tk.W)
-        
-        # Add tooltips
-        self.create_tooltip(separate_cb, "Group similar data types in separate subplots")
-        self.create_tooltip(grid_cb, "Show grid lines on plots for better readability")
-    
-    def add_hover_effect(self, widget, normal_color, hover_color):
-        """Add hover effect to button"""
-        def on_enter(event):
-            widget.configure(bg=hover_color)
-        
-        def on_leave(event):
-            widget.configure(bg=normal_color)
-        
-        widget.bind('<Enter>', on_enter)
-        widget.bind('<Leave>', on_leave)
-    
-    def create_tooltip(self, widget, text):
-        """Create a modern tooltip for a widget - FIXED to prevent artifacts"""
-        def on_enter(event):
-            # Destroy any existing tooltip first
-            if hasattr(widget, 'tooltip'):
-                try:
-                    widget.tooltip.destroy()
-                except:
-                    pass
-                delattr(widget, 'tooltip')
-            
-            # Create new tooltip
-            try:
-                tooltip = tk.Toplevel()
-                tooltip.wm_overrideredirect(True)
-                tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
-                tooltip.configure(bg=self.COLORS['text_primary'])
-                
-                # Ensure tooltip stays on top but not always
-                tooltip.attributes('-topmost', True)
-                
-                label = tk.Label(tooltip, 
-                               text=text, 
-                               bg=self.COLORS['text_primary'],
-                               fg='white',
-                               font=('Segoe UI', 8),
-                               padx=10, pady=6)
-                label.pack()
-                
-                widget.tooltip = tooltip
-                
-                # Auto-destroy tooltip after 5 seconds to prevent artifacts
-                tooltip.after(5000, lambda: on_leave(None))
-                
-            except Exception as e:
-                print(f"Tooltip error: {e}")
-        
-        def on_leave(event):
-            try:
-                if hasattr(widget, 'tooltip'):
-                    widget.tooltip.destroy()
-                    delattr(widget, 'tooltip')
-            except Exception:
-                pass
-        
-        # Clean up any existing bindings first
-        widget.unbind('<Enter>')
-        widget.unbind('<Leave>')
-        
-        # Bind new events
-        widget.bind('<Enter>', on_enter)
-        widget.bind('<Leave>', on_leave)
-        
-        # Also bind to focus events to clean up tooltips
-        try:
-            widget.bind('<FocusOut>', on_leave)
-            widget.bind('<Button-1>', on_leave)  # Clean up on click
-        except:
-            pass
     
     def update_data_categories(self, data_categories: Dict[str, pd.DataFrame]):
         """Update data categories and create modern checkboxes"""
         self.data_categories = data_categories
         self.clear_selection_widgets()
         self.create_selection_widgets()
-        self.update_category_dropdown()
         self.update_selection_count()
     
     def clear_selection_widgets(self):
-        """Clear existing selection widgets - FIXED to prevent artifacts"""
-        # Clean up tooltips first
-        for widget in self.scrollable_frame.winfo_children():
-            self._cleanup_widget_tooltips(widget)
-            widget.destroy()
-        
+        """Clear existing selection widgets SAFELY"""
         # Clear selection variables
         self.selection_vars.clear()
         
-        # Force update the canvas scroll region
-        if self.canvas:
-            self.canvas.update_idletasks()
-            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-    
-    def _cleanup_widget_tooltips(self, widget):
-        """Recursively clean up tooltips for a widget and its children"""
-        try:
-            # Clean up tooltip for this widget
-            if hasattr(widget, 'tooltip'):
+        # Destroy children safely
+        if self.scrollable_frame:
+            for child in self.scrollable_frame.winfo_children():
                 try:
-                    widget.tooltip.destroy()
+                    child.destroy()
                 except:
                     pass
-                delattr(widget, 'tooltip')
-            
-            # Clean up tooltips for children
-            for child in widget.winfo_children():
-                self._cleanup_widget_tooltips(child)
-                
-        except Exception:
-            pass  # Ignore errors during cleanup
+        
+        # Force update the canvas scroll region
+        if self.canvas:
+            try:
+                self.canvas.update_idletasks()
+                self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            except:
+                pass
     
     def create_selection_widgets(self):
         """Create modern checkboxes for data selection"""
         if not self.data_categories:
-            # Show modern empty state
+            # Show empty state
             empty_frame = tk.Frame(self.scrollable_frame, bg=self.COLORS['bg_primary'])
             empty_frame.pack(fill=tk.X, padx=20, pady=40)
             
@@ -392,28 +282,27 @@ class DataSelectionPanel(ttk.Frame):
                     font=('Segoe UI', 9)).pack()
             return
         
-        # Group data by category for better organization
+        # Group data by category
         categories = self.group_data_by_category()
         
-        for i, (category_name, category_data) in enumerate(categories.items()):
-            # Create modern category card - more compact
+        for category_name, category_data in categories.items():
+            # Create category card
             category_card = tk.Frame(self.scrollable_frame, 
                                    bg=self.COLORS['bg_tertiary'],
-                                   relief='flat', bd=1,
-                                   highlightbackground=self.COLORS['border_light'])
-            category_card.pack(fill=tk.X, padx=10, pady=(0, 8))  # Reduced padding
+                                   relief='flat', bd=1)
+            category_card.pack(fill=tk.X, padx=10, pady=(0, 8))
             
-            # Category header with modern styling - more compact
+            # Category header
             header_frame = tk.Frame(category_card, bg=self.COLORS['bg_tertiary'])
-            header_frame.pack(fill=tk.X, padx=10, pady=(8, 5))  # Reduced padding
+            header_frame.pack(fill=tk.X, padx=10, pady=(8, 5))
             
-            # Category icon and name
+            # Category name
             category_icon = self.get_category_icon(category_name)
             header_label = tk.Label(header_frame,
                                   text=f"{category_icon} {category_name}",
                                   bg=self.COLORS['bg_tertiary'],
                                   fg=self.COLORS['text_primary'],
-                                  font=('Segoe UI', 9, 'bold'))  # Smaller font
+                                  font=('Segoe UI', 9, 'bold'))
             header_label.pack(side=tk.LEFT)
             
             # Category controls
@@ -421,7 +310,7 @@ class DataSelectionPanel(ttk.Frame):
             
             # Data items
             content_frame = tk.Frame(category_card, bg=self.COLORS['bg_tertiary'])
-            content_frame.pack(fill=tk.X, padx=10, pady=(0, 8))  # Reduced padding
+            content_frame.pack(fill=tk.X, padx=10, pady=(0, 8))
             
             # Create checkboxes for each data field
             for data_key, columns in category_data.items():
@@ -441,13 +330,11 @@ class DataSelectionPanel(ttk.Frame):
         categories = {}
         
         for data_key, df in self.data_categories.items():
-            # Extract category from data key (e.g., "rov_data/depth.log" -> "rov_data")
+            # Extract category from data key
             if '/' in data_key:
                 category = data_key.split('/')[0]
-                file_name = data_key.split('/')[-1]
             else:
                 category = "Other"
-                file_name = data_key
             
             if category not in categories:
                 categories[category] = {}
@@ -459,66 +346,56 @@ class DataSelectionPanel(ttk.Frame):
         return categories
     
     def create_category_controls(self, parent, category_name: str, category_data: Dict[str, list]):
-        """Create modern category-level selection controls"""
+        """Create category-level selection controls"""
         controls_frame = tk.Frame(parent, bg=self.COLORS['bg_tertiary'])
         controls_frame.pack(side=tk.RIGHT)
         
-        # Small modern buttons for category selection
-        select_cat_btn = tk.Button(controls_frame,
-                                 text="All",
-                                 command=lambda: self.select_category_data(category_data, True),
-                                 bg=self.COLORS['accent_light'],
-                                 fg=self.COLORS['accent'],
-                                 font=('Segoe UI', 7),
-                                 relief='flat',
-                                 borderwidth=0,
-                                 padx=8, pady=4,
-                                 cursor='hand2')
-        select_cat_btn.pack(side=tk.LEFT, padx=(0, 5))
+        # Select all button
+        select_btn = tk.Button(controls_frame,
+                             text="All",
+                             command=lambda: self.select_category_data(category_data, True),
+                             bg=self.COLORS['accent_light'],
+                             fg=self.COLORS['accent'],
+                             font=('Segoe UI', 7),
+                             relief='flat',
+                             borderwidth=0,
+                             padx=8, pady=4)
+        select_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        clear_cat_btn = tk.Button(controls_frame,
-                                text="None",
-                                command=lambda: self.select_category_data(category_data, False),
-                                bg=self.COLORS['bg_primary'],
-                                fg=self.COLORS['text_secondary'],
-                                font=('Segoe UI', 7),
-                                relief='flat',
-                                borderwidth=1,
-                                highlightbackground=self.COLORS['border'],
-                                padx=8, pady=4,
-                                cursor='hand2')
-        clear_cat_btn.pack(side=tk.LEFT)
-        
-        # Add hover effects
-        self.add_hover_effect(select_cat_btn, self.COLORS['accent_light'], self.COLORS['accent'])
-        self.add_hover_effect(clear_cat_btn, self.COLORS['bg_primary'], self.COLORS['border_light'])
-        
-        # Add tooltips
-        self.create_tooltip(select_cat_btn, f"Select all data in {category_name}")
-        self.create_tooltip(clear_cat_btn, f"Deselect all data in {category_name}")
+        # Clear all button
+        clear_btn = tk.Button(controls_frame,
+                            text="None",
+                            command=lambda: self.select_category_data(category_data, False),
+                            bg=self.COLORS['bg_primary'],
+                            fg=self.COLORS['text_secondary'],
+                            font=('Segoe UI', 7),
+                            relief='flat',
+                            borderwidth=1,
+                            padx=8, pady=4)
+        clear_btn.pack(side=tk.LEFT)
     
     def create_data_checkboxes(self, parent, data_key: str, columns: list):
-        """Create modern checkboxes for data columns"""
+        """Create checkboxes for data columns"""
         file_frame = tk.Frame(parent, bg=self.COLORS['bg_tertiary'])
-        file_frame.pack(fill=tk.X, pady=(0, 6))  # Reduced padding
+        file_frame.pack(fill=tk.X, pady=(0, 6))
         
-        # File label with modern styling - more compact
+        # File label
         file_name = data_key.split('/')[-1] if '/' in data_key else data_key
         file_label = tk.Label(file_frame,
                             text=f"📄 {file_name}:",
                             bg=self.COLORS['bg_tertiary'],
                             fg=self.COLORS['text_primary'],
-                            font=('Segoe UI', 8, 'bold'))  # Smaller font
-        file_label.pack(anchor=tk.W, padx=(5, 0))  # Reduced padding
+                            font=('Segoe UI', 8, 'bold'))
+        file_label.pack(anchor=tk.W, padx=(5, 0))
         
-        # Create modern checkboxes for each column - more compact
+        # Create checkboxes for each column
         for column in columns:
             var = tk.BooleanVar()
             full_key = f"{data_key}/{column}"
             self.selection_vars[full_key] = var
             
             checkbox_frame = tk.Frame(file_frame, bg=self.COLORS['bg_tertiary'])
-            checkbox_frame.pack(fill=tk.X, padx=(15, 0), pady=1)  # Reduced padding
+            checkbox_frame.pack(fill=tk.X, padx=(15, 0), pady=1)
             
             checkbox = tk.Checkbutton(checkbox_frame,
                                     text=self.format_column_name(column),
@@ -526,20 +403,16 @@ class DataSelectionPanel(ttk.Frame):
                                     command=self._on_selection_change,
                                     bg=self.COLORS['bg_tertiary'],
                                     fg=self.COLORS['text_primary'],
-                                    font=('Segoe UI', 8),  # Smaller font
+                                    font=('Segoe UI', 8),
                                     activebackground=self.COLORS['bg_tertiary'],
                                     activeforeground=self.COLORS['text_primary'],
                                     selectcolor=self.COLORS['accent'],
                                     relief='flat',
                                     borderwidth=0)
             checkbox.pack(anchor=tk.W)
-            
-            # Add tooltip with data info
-            self.create_data_tooltip(checkbox, data_key, column)
     
     def format_column_name(self, column: str) -> str:
         """Format column name for display"""
-        # Replace underscores with spaces and capitalize
         formatted = column.replace('_', ' ').title()
         
         # Handle common abbreviations
@@ -556,47 +429,11 @@ class DataSelectionPanel(ttk.Frame):
         
         return formatted
     
-    def create_data_tooltip(self, widget, data_key: str, column: str):
-        """Create tooltip with data information"""
-        if data_key not in self.data_categories:
-            return
-        
-        df = self.data_categories[data_key]
-        if column not in df.columns:
-            return
-        
-        try:
-            # Get basic statistics
-            series = df[column]
-            if series.dtype in ['int64', 'float64']:
-                stats_text = f"Data: {column}\n"
-                stats_text += f"Points: {len(series):,}\n"
-                stats_text += f"Range: {series.min():.3f} to {series.max():.3f}\n"
-                stats_text += f"Mean: {series.mean():.3f}"
-            else:
-                stats_text = f"Data: {column}\n"
-                stats_text += f"Points: {len(series):,}\n"
-                stats_text += f"Type: {series.dtype}"
-            
-            self.create_tooltip(widget, stats_text)
-        except Exception:
-            self.create_tooltip(widget, f"Data: {column}")
-    
-    def update_category_dropdown(self):
-        """Update the category dropdown options"""
-        
-        categories = set()
-        for data_key in self.data_categories.keys():
-            if '/' in data_key:
-                category = data_key.split('/')[0]
-                categories.add(category)
-        
-        category_list = ['All Categories'] + sorted(categories)
-    
     def update_selection_count(self):
         """Update the selection count badge"""
-        count = self.get_selected_count()
-        self.selection_count_var.set(str(count))
+        if self.selection_count_var:
+            count = self.get_selected_count()
+            self.selection_count_var.set(str(count))
     
     # Event handlers
     def _on_selection_change(self):
@@ -609,14 +446,6 @@ class DataSelectionPanel(ttk.Frame):
         """Handle plot option change"""
         if self.on_plot_option_change:
             self.on_plot_option_change()
-    
-    def _on_category_selected(self, event=None):
-        """Handle category selection from dropdown"""
-        category = self.category_var.get()
-        if category == 'All Categories':
-            self.select_all_data()
-        elif category:
-            self.select_category_by_name(category)
     
     # Public interface methods
     def get_selection_vars(self) -> Dict[str, tk.BooleanVar]:
@@ -652,26 +481,6 @@ class DataSelectionPanel(ttk.Frame):
                     self.selection_vars[full_key].set(select)
         self._on_selection_change()
     
-    def select_category_by_name(self, category_name: str):
-        """Select all data in a named category"""
-        for data_key in self.data_categories.keys():
-            if data_key.startswith(f"{category_name}/"):
-                df = self.data_categories[data_key]
-                columns = [col for col in df.columns if col != 'timestamp']
-                for column in columns:
-                    full_key = f"{data_key}/{column}"
-                    if full_key in self.selection_vars:
-                        self.selection_vars[full_key].set(True)
-        self._on_selection_change()
-    
     def get_selected_count(self) -> int:
         """Get count of selected data series"""
         return sum(1 for var in self.selection_vars.values() if var.get())
-    
-    def set_selection_by_pattern(self, pattern: str, select: bool = True):
-        """Select data series matching a pattern"""
-        pattern_lower = pattern.lower()
-        for data_key, var in self.selection_vars.items():
-            if pattern_lower in data_key.lower():
-                var.set(select)
-        self._on_selection_change()
